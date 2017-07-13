@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="css/cropper.css">
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/cropper.js"></script>
+</head>
+<body>
+<div class="img-container">
+    <img  alt=""  src="1.jpg">
+</div>
+<div class="tip"> 点击</div>
+<button>插入</button>
+<input type="text" class="test">
+<script>
+    var $image = $('.img-container > img');
+
+   /* $image.attr("src");*/
+
+    $image.on("load", function() {        // 等待图片加载成功后，才进行图片的裁剪功能
+        $image.cropper({
+            aspectRatio: 1 / 1　　// 1：1的比例进行裁剪，可以是任意比例，自己调整
+        });
+    })
+    $('.tip').on("click", function() {
+        var src = $image.eq(0).attr("src");
+        var canvasdata = $image.cropper("getCanvasData");
+        var cropBoxData = $image.cropper('getCropBoxData');
+
+        convertToData(src, canvasdata, cropBoxData, function(basechar) {
+            // 回调后的函数处理
+        });
+    })
+    function convertToData(url, canvasdata, cropdata, callback) {
+        var cropw = cropdata.width; // 剪切的宽
+        var croph = cropdata.height; // 剪切的宽
+        var imgw = canvasdata.width; // 图片缩放或则放大后的高
+        var imgh = canvasdata.height; // 图片缩放或则放大后的高
+
+        var poleft = canvasdata.left - cropdata.left; // canvas定位图片的左边位置
+        var potop = canvasdata.top - cropdata.top; // canvas定位图片的上边位置
+
+        var canvas = document.createElement("canvas");
+        var ctx = canvas.getContext('2d');
+
+        canvas.width = cropw;
+        canvas.height = croph;
+
+        var img = new Image();
+        img.src = url;
+
+        img.onload = function() {
+            this.width = imgw;
+            this.height = imgh;
+            // 这里主要是懂得canvas与图片的裁剪之间的关系位置
+            ctx.drawImage(this, poleft, potop, this.width, this.height);
+            var base64 = canvas.toDataURL('image/jpg', 1);  // 这里的“1”是指的是处理图片的清晰度（0-1）之间，当然越小图片越模糊，处理后的图片大小也就越小
+            callback && callback(base64)      // 回调base64字符串
+        }
+    }
+(function($){
+    $.fn.extend({
+        insertAtCaret: function(myValue){
+            var $t=$(this)[0];
+            if (document.selection) {
+                this.focus();
+                sel = document.selection.createRange();
+                sel.text = myValue;
+                this.focus();
+            }
+            else
+                if ($t.selectionStart || $t.selectionStart == '0') {
+                    var startPos = $t.selectionStart;
+                    var endPos = $t.selectionEnd;
+                    var scrollTop = $t.scrollTop;
+                    $t.value = $t.value.substring(0, startPos) + myValue + $t.value.substring(endPos, $t.value.length);
+                    this.focus();
+                    $t.selectionStart = startPos + myValue.length;
+                    $t.selectionEnd = startPos + myValue.length;
+                    $t.scrollTop = scrollTop;
+                }
+                else {
+                    this.value += myValue;
+                    this.focus();
+                }
+        }
+    })  
+})(jQuery);
+$('button').click(function(){
+$(".test").insertAtCaret("新表情");
+})
+</script>
+</body>
+</html>
